@@ -422,7 +422,7 @@
   window.salvarLogin = async function(usuario, senha, tipo) {
     // 1. Busca os dados atuais do bin
     const getRes = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
-      headers: { 'X-Access-Key': JSONBIN_API_KEY }
+      headers: { 'X-Master-Key': JSONBIN_API_KEY }
     });
     if (!getRes.ok) throw new Error(`Erro ao buscar bin: ${getRes.status}`);
     const getData = await getRes.json();
@@ -442,7 +442,7 @@
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'X-Access-Key': JSONBIN_API_KEY
+        'X-Master-Key': JSONBIN_API_KEY
       },
       body: JSON.stringify({ logins })
     });
